@@ -1,0 +1,10 @@
+name: FindWithSound
+version: ${project.version}
+main: net.kunmc.lab.findwithsound.Findwithsound
+api-version: 1.15
+authors: [ Bun133 ]
+website: https://twitter.com/bun133_
+commands:
+  fis:
+    description: Find Tresure Command
+    usage: /<command> <s/start/e/end/set>
