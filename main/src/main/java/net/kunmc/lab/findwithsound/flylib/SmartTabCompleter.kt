@@ -23,14 +23,19 @@ class SmartTabCompleter(val chains: MutableList<TabChain>) : TabCompleter {
         alias: String,
         args: Array<out String>
     ): MutableList<String> {
+
         val strings = args.toMutableList().map { it as String }.toTypedArray()
         val list = mutableListOf<String>()
+
         chains
             .filter { it.isExist(strings) }
             .forEach { chain ->
                 chain.getMatched(strings)!!.getAsList()
+                    .filter { it.startsWith(strings[strings.lastIndex]) }
                     .forEach { list.add(it) }
             }
+
+
         if (list.isEmpty()) list.add("")
         return list
     }

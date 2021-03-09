@@ -47,9 +47,11 @@ class Command(val plugin: Findwithsound) : CommandExecutor {
         if (args.size != 1) return false
         when (args[0]) {
             "s", "start" -> {
+                Bukkit.broadcastMessage("お宝さがし開始!")
                 plugin.manager.isGoing = true
             }
             "e", "end" -> {
+                Bukkit.broadcastMessage("お宝さがし終了!")
                 plugin.manager.isGoing = false
             }
             "set" -> {
@@ -71,16 +73,8 @@ class Command(val plugin: Findwithsound) : CommandExecutor {
                     arrayOf(
                         TabObject(
                             arrayOf(
-                                "s", "start"
-                            )
-                        ),
-                        TabObject(
-                            arrayOf(
-                                "e", "end"
-                            )
-                        ),
-                        TabObject(
-                            arrayOf(
+                                "s", "start",
+                                "e", "end",
                                 "set"
                             )
                         )
@@ -120,8 +114,12 @@ class GameManager(plugin: JavaPlugin) : Listener {
     val settingPlayer = mutableListOf<Player>()
     fun setMode(p: Player) {
         if (settingPlayer.contains(p)) {
+            p.sendMessage("設置モードが解除されました")
             settingPlayer.remove(p)
-        } else settingPlayer.add(p)
+        } else {
+            p.sendMessage("設置モードが有効化されました")
+            settingPlayer.add(p)
+        }
     }
 
     @EventHandler
@@ -130,14 +128,18 @@ class GameManager(plugin: JavaPlugin) : Listener {
             e.player.sendMessage("お宝を配置しました!")
             e.player.sendMessage("続けてお宝を配置できます!")
             e.player.sendMessage("終了する場合は/fis set")
-            treasures.add(Treasure(e.blockPlaced.location))
+            val loc = e.blockPlaced.location
+            loc.add(0.5, 0.0, 0.0)
+            loc.add(0.0, 0.5, 0.0)
+            loc.add(0.0, 0.0, 0.5)
+            treasures.add(Treasure(loc))
         }
     }
 }
 
 class Treasure(val loc: Location) {
     companion object {
-        const val volume = 7.0f
+        const val volume = 0.3f
         val sound = Sound.ENTITY_ITEM_PICKUP
         val effect = Particle.FIREWORKS_SPARK
         fun getDistance(loc: Location, loc2: Location): Double {
@@ -161,7 +163,7 @@ class Treasure(val loc: Location) {
                 Bukkit.broadcastMessage("${it.displayName}がお宝を発見した!")
                 isFounded = true
             } else {
-                SoundUtils.playSound(it, sound, (1 / dis[it]!! * volume).toFloat())
+                SoundUtils.playSound(it, sound, (1 * volume / dis[it]!!).toFloat())
             }
         }
     }
