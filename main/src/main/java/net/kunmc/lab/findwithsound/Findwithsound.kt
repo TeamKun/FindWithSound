@@ -234,8 +234,8 @@ class Treasure(val loc: Location, val plugin: Findwithsound) {
             Bukkit.getOnlinePlayers().forEach {
                 it.sendTitle(
                     Title(
-                        "${"" + ChatColor.GOLD + "最後の" + ChatColor.RESET}宝物を発見!!",
-                        "${player.displayName}が発見",
+                        "${"" + ChatColor.GOLD + "最後" + ChatColor.RESET}の宝物を発見!!",
+                        "${"" + ChatColor.GOLD + player.displayName + ChatColor.RESET}}が発見",
                         2,
                         20 * 5,
                         2
@@ -253,7 +253,7 @@ class Treasure(val loc: Location, val plugin: Findwithsound) {
             Bukkit.getOnlinePlayers().forEach {
                 it.sendTitle(
                     Title(
-                        "${getFounded()}個目の宝物が発見された!",
+                        "${"" + ChatColor.GOLD + getFounded() + ChatColor.RESET}個目の宝物が発見された!",
                         "${"" + ChatColor.GOLD + player.displayName + ChatColor.RESET}が発見/残り${"" + ChatColor.GOLD + getNotFounded() + ChatColor.RESET}個",
                         2,
                         20 * 4,
