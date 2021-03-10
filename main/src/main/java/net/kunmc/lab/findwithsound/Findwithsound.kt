@@ -53,11 +53,11 @@ class Command(val plugin: Findwithsound) : CommandExecutor {
         if (args.size != 1) return false
         when (args[0]) {
             "s", "start" -> {
-                Bukkit.broadcastMessage("お宝さがし開始!")
+                Bukkit.broadcastMessage("宝物さがし開始!")
                 plugin.manager.isGoing = true
             }
             "e", "end" -> {
-                Bukkit.broadcastMessage("お宝さがし終了!")
+                Bukkit.broadcastMessage("宝物さがし終了!")
                 plugin.manager.treasures.clear()
                 plugin.manager.isGoing = false
             }
@@ -132,7 +132,7 @@ class GameManager(val plugin: Findwithsound) : Listener {
     @EventHandler
     fun onBlockPlaced(e: BlockPlaceEvent) {
         if (settingPlayer.contains(e.player)) {
-            e.player.sendMessage("お宝を配置しました!")
+            e.player.sendMessage("宝物を配置しました!")
             e.player.sendMessage("続けてお宝を配置できます!")
             e.player.sendMessage("終了する場合は/fws set")
             val loc = e.blockPlaced.location
@@ -154,16 +154,16 @@ class GameManager(val plugin: Findwithsound) : Listener {
                 r.add(it)
             }
 
-            r.forEach { treasures.remove(it);e.player.sendMessage("お宝を破壊した!") }
+            r.forEach { treasures.remove(it);e.player.sendMessage("宝物を破壊した!") }
         }
     }
 }
 
 class Treasure(val loc: Location, val plugin: Findwithsound) {
     companion object {
-        const val volume = 0.3f
+        const val volume = 0.5f
         val sound = Sound.ENTITY_ITEM_PICKUP
-        val foundSound = Sound.ENTITY_COW_MILK
+        val foundSound = Sound.BLOCK_ANVIL_PLACE
         val effect = Particle.FIREWORKS_SPARK
         const val max_distance = 64
         const val interval = 64
@@ -189,15 +189,14 @@ class Treasure(val loc: Location, val plugin: Findwithsound) {
     val soundList = mutableMapOf<Player, Int>()
 
     fun playSound() {
-        val dis = mutableMapOf<Player, Double>()
         Bukkit.getOnlinePlayers()
             .filter { !plugin.manager.settingPlayer.contains(it) }
+            .map { Pair(it, getDistance(it.location, loc)) }
             .filter {
-                dis[it] = getDistance(it.location, loc)
-                dis[it]!! < max_distance
+                it.second < max_distance
             }.forEach {
-                if (dis[it]!! < 2.0) {
-                    onFound(it)
+                if (it.second < 2.0) {
+                    onFound(it.first)
                 } else {
                     invokeSound()
 //                    SoundUtils.playSound(it, sound, (1 * volume / dis[it]!!).toFloat())
@@ -227,32 +226,46 @@ class Treasure(val loc: Location, val plugin: Findwithsound) {
         return plugin.manager.treasures.filter { it.isFounded }.size
     }
 
-    private fun onFound(it: Player) {
+    private fun onFound(player: Player) {
         isFounded = true
+
+
         if (plugin.manager.treasures.size <= getFounded()) {
-            it.sendTitle(Title("${"" + ChatColor.GOLD + it.displayName + ChatColor.RESET}が最後の宝箱を発見!!", "${getFounded()}個の宝箱が発見済み", 2, 20 * 5, 2))
+            Bukkit.getOnlinePlayers().forEach {
+                it.sendTitle(
+                    Title(
+                        "${"" + ChatColor.GOLD + "最後の" + ChatColor.RESET}宝物を発見!!",
+                        "${player.displayName}が発見",
+                        2,
+                        20 * 5,
+                        2
+                    )
+                )
+            }
+
+            Bukkit.getOnlinePlayers().forEach {
+                it.sendActionBar("宝物${plugin.manager.treasures.size}個中${getFounded()}個発見済み")
+            }
+
             plugin.manager.isGoing = false
             plugin.manager.treasures.clear()
-            Bukkit.getOnlinePlayers().forEach { p ->
-                val dis = getDistance(p.location, this.loc)
-                SoundUtils.playSound(p, foundSound, getVolume(dis))
-            }
         } else {
             Bukkit.getOnlinePlayers().forEach {
                 it.sendTitle(
                     Title(
-                        "${"" + ChatColor.GOLD + it.displayName + ChatColor.RESET}がお宝を発見した!",
-                        "残り${getNotFounded()}個",
+                        "${getFounded()}個目の宝物が発見された!",
+                        "${"" + ChatColor.GOLD + player.displayName + ChatColor.RESET}が発見/残り${"" + ChatColor.GOLD + getNotFounded() + ChatColor.RESET}個",
                         2,
                         20 * 4,
                         2
                     )
                 )
-                Bukkit.getOnlinePlayers().forEach { p ->
-                    val dis = getDistance(p.location, this.loc)
-                    SoundUtils.playSound(p, foundSound, getVolume(dis))
-                }
             }
+        }
+
+        Bukkit.getOnlinePlayers().forEach { p ->
+            val dis = getDistance(p.location, this.loc)
+            SoundUtils.playSound(p, foundSound, getVolume(dis))
         }
     }
 
@@ -273,12 +286,14 @@ class InformationNoticer(val plugin: Findwithsound) {
     fun tick() {
         if (plugin.manager.isGoing) {
             if (plugin.manager.treasures.size <= getFounded()) {
+                // 実はここは通らない
+
                 Bukkit.getOnlinePlayers().forEach {
-                    it.sendActionBar("宝箱全発見!")
+                    it.sendActionBar("宝物全発見!")
                 }
             } else {
                 Bukkit.getOnlinePlayers().forEach {
-                    it.sendActionBar("宝箱${plugin.manager.treasures.size}個中${getFounded()}個発見済み")
+                    it.sendActionBar("宝物${plugin.manager.treasures.size}個中${getFounded()}個発見済み")
                 }
             }
         }
