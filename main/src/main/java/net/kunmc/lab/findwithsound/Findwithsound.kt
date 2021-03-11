@@ -235,7 +235,7 @@ class Treasure(val loc: Location, val plugin: Findwithsound) {
                 it.sendTitle(
                     Title(
                         "${"" + ChatColor.GOLD + "最後" + ChatColor.RESET}の宝物を発見!!",
-                        "${"" + ChatColor.GOLD + player.displayName + ChatColor.RESET}}が発見",
+                        "${"" + ChatColor.GOLD + player.displayName + ChatColor.RESET}が発見",
                         2,
                         20 * 5,
                         2
