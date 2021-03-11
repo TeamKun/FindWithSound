@@ -22,12 +22,15 @@ import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 class Findwithsound : JavaPlugin() {
+    lateinit var configManager: ConfigManager
     lateinit var command: net.kunmc.lab.findwithsound.Command
     lateinit var manager: GameManager
     lateinit var noticer: InformationNoticer
 
     override fun onEnable() {
         // Plugin startup logic
+        saveDefaultConfig()
+        configManager = ConfigManager(this)
         manager = GameManager(this)
         command = Command(this)
         noticer = InformationNoticer(this)
@@ -38,6 +41,15 @@ class Findwithsound : JavaPlugin() {
     override fun onDisable() {
         // Plugin shutdown logic
     }
+}
+
+class ConfigManager(val plugin: Findwithsound) {
+    val volume = plugin.config.getString("Volume")!!.toFloat()
+    val sound = Sound.ENTITY_ITEM_PICKUP
+    val foundSound = Sound.BLOCK_ANVIL_PLACE
+    val effect = Particle.FIREWORKS_SPARK
+    val max_distance = plugin.config.getString("MaxDistance")!!.toInt()
+    val interval = plugin.config.getString("Interval")!!.toInt()
 }
 
 class Command(val plugin: Findwithsound) : CommandExecutor {
@@ -161,27 +173,12 @@ class GameManager(val plugin: Findwithsound) : Listener {
 
 class Treasure(val loc: Location, val plugin: Findwithsound) {
     companion object {
-        const val volume = 0.5f
-        val sound = Sound.ENTITY_ITEM_PICKUP
-        val foundSound = Sound.BLOCK_ANVIL_PLACE
-        val effect = Particle.FIREWORKS_SPARK
-        const val max_distance = 64
-        const val interval = 64
-
         fun getDistance(loc: Location, loc2: Location): Double {
             return sqrt(
                 (max(loc.x, loc2.x) - min(loc.x, loc2.x)) * (max(loc.x, loc2.x) - min(loc.x, loc2.x)) +
                         (max(loc.y, loc2.y) - min(loc.y, loc2.y)) * (max(loc.y, loc2.y) - min(loc.y, loc2.y)) +
                         (max(loc.z, loc2.z) - min(loc.z, loc2.z)) * (max(loc.z, loc2.z) - min(loc.z, loc2.z))
             )
-        }
-
-        fun getVolume(dis: Double): Float {
-            return (1 * volume / dis).toFloat()
-        }
-
-        fun getIntervalTick(dis: Double): Int {
-            return max(1, ((dis * dis) / interval).roundToInt())
         }
     }
 
@@ -193,13 +190,12 @@ class Treasure(val loc: Location, val plugin: Findwithsound) {
             .filter { !plugin.manager.settingPlayer.contains(it) }
             .map { Pair(it, getDistance(it.location, loc)) }
             .filter {
-                it.second < max_distance
+                it.second < plugin.configManager.max_distance
             }.forEach {
                 if (it.second < 2.0) {
                     onFound(it.first)
                 } else {
                     invokeSound()
-//                    SoundUtils.playSound(it, sound, (1 * volume / dis[it]!!).toFloat())
                 }
             }
     }
@@ -212,7 +208,7 @@ class Treasure(val loc: Location, val plugin: Findwithsound) {
                 }
                 soundList[it] = soundList[it]!! - 1
                 if (soundList[it]!! <= 0) {
-                    SoundUtils.playSound(it, sound, getVolume(getDistance(it.location, loc)))
+                    SoundUtils.playSound(it, plugin.configManager.sound, getVolume(getDistance(it.location, loc)))
                     soundList[it] = getIntervalTick(getDistance(loc, it.location))
                 }
             }
@@ -265,12 +261,20 @@ class Treasure(val loc: Location, val plugin: Findwithsound) {
 
         Bukkit.getOnlinePlayers().forEach { p ->
             val dis = getDistance(p.location, this.loc)
-            SoundUtils.playSound(p, foundSound, getVolume(dis))
+            SoundUtils.playSound(p, plugin.configManager.foundSound, getVolume(dis))
         }
     }
 
     fun showEffect() {
-        SimpleEffect.spawnParticle(loc, effect)
+        SimpleEffect.spawnParticle(loc, plugin.configManager.effect)
+    }
+
+    fun getVolume(dis: Double): Float {
+        return (1 * plugin.configManager.volume / dis).toFloat()
+    }
+
+    fun getIntervalTick(dis: Double): Int {
+        return max(1, ((dis * dis) / plugin.configManager.interval).roundToInt())
     }
 }
 
