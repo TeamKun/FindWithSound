@@ -48,8 +48,10 @@ class ConfigManager(val plugin: Findwithsound) {
     val sound = Sound.ENTITY_ITEM_PICKUP
     val foundSound = Sound.BLOCK_ANVIL_PLACE
     val effect = Particle.FIREWORKS_SPARK
-    val max_distance = plugin.config.getString("MaxDistance")!!.toInt()
+    val maxDistance = plugin.config.getString("MaxDistance")!!.toInt()
     val interval = plugin.config.getString("Interval")!!.toInt()
+    val minPitch = plugin.config.getString("MinPitch")!!.toFloat()
+    val maxPitch = plugin.config.getString("MaxPitch")!!.toFloat()
 }
 
 class Command(val plugin: Findwithsound) : CommandExecutor {
@@ -190,7 +192,7 @@ class Treasure(val loc: Location, val plugin: Findwithsound) {
             .filter { !plugin.manager.settingPlayer.contains(it) }
             .map { Pair(it, getDistance(it.location, loc)) }
             .filter {
-                it.second < plugin.configManager.max_distance
+                it.second < plugin.configManager.maxDistance
             }.forEach {
                 if (it.second < 2.0) {
                     onFound(it.first)
@@ -208,7 +210,7 @@ class Treasure(val loc: Location, val plugin: Findwithsound) {
                 }
                 soundList[it] = soundList[it]!! - 1
                 if (soundList[it]!! <= 0) {
-                    SoundUtils.playSound(it, plugin.configManager.sound, getVolume(getDistance(it.location, loc)))
+                    SoundUtils.playSound(it, plugin.configManager.sound, getVolume(getDistance(it.location, loc)),getPitch(getDistance(it.location, loc)))
                     soundList[it] = getIntervalTick(getDistance(loc, it.location))
                 }
             }
@@ -275,6 +277,10 @@ class Treasure(val loc: Location, val plugin: Findwithsound) {
 
     fun getIntervalTick(dis: Double): Int {
         return max(1, ((dis * dis) / plugin.configManager.interval).roundToInt())
+    }
+
+    fun getPitch(dis:Double):Float{
+        return (plugin.configManager.minPitch + ((plugin.configManager.maxPitch - plugin.configManager.minPitch) * (plugin.configManager.maxDistance - dis) / plugin.configManager.maxDistance)).toFloat()
     }
 }
 
