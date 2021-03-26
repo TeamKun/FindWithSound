@@ -1,5 +1,5 @@
-Volume: 1.0F
-MaxDistance: 64
+Volume: 4.0F
+MaxDistance: 128
 Interval: 16
 MinPitch: 0.0F
 MaxPitch: 5.0F
